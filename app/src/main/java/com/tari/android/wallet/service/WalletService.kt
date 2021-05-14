@@ -1121,7 +1121,8 @@ internal class WalletService : Service(), FFIWalletListener, LifecycleObserver {
                 MicroTari(completedTxFFI.getFee()),
                 completedTxFFI.getTimestamp(),
                 completedTxFFI.getMessage(),
-                status
+                status,
+                completedTxFFI.getConfirmationsCount()
             )
             // destroy native objects
             sourcePublicKeyFFI.destroy()

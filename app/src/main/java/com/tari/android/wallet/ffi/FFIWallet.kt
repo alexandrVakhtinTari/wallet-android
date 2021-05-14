@@ -535,7 +535,8 @@ internal class FFIWallet(
             MicroTari(tx.getFee()),
             tx.getTimestamp(),
             tx.getMessage(),
-            TxStatus.map(tx.getStatus())
+            TxStatus.map(tx.getStatus()),
+            tx.getConfirmationsCount()
         )
         tx.destroy()
         GlobalScope.launch { listener?.onTxMined(completed) }
@@ -558,7 +559,8 @@ internal class FFIWallet(
             MicroTari(tx.getFee()),
             tx.getTimestamp(),
             tx.getMessage(),
-            TxStatus.map(tx.getStatus())
+            TxStatus.map(tx.getStatus()),
+            tx.getConfirmationsCount()
         )
         tx.destroy()
         GlobalScope.launch { listener?.onTxMinedUnconfirmed(completed, confirmationCount) }
