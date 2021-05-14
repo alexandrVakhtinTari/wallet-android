@@ -448,7 +448,7 @@ internal class WalletService : Service(), FFIWalletListener, LifecycleObserver {
         )
         completedTx.user = getUserByPublicKey(completedTx.user.publicKey)
         // post event to bus for the internal listeners
-        EventBus.post(Event.Wallet.TxMinedUnconfirmed(completedTx, confirmationCount))
+        EventBus.post(Event.Wallet.TxMinedUnconfirmed(completedTx))
         // notify external listeners
         listeners.iterator().forEach {
             it.onTxMinedUnconfirmed(completedTx, confirmationCount)
