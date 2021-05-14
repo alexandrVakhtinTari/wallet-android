@@ -321,7 +321,7 @@ internal class TxListFragment : Fragment(),
             onOutboundTxBroadcast(it.tx)
         }
         EventBus.subscribe<Event.Wallet.TxMinedUnconfirmed>(this) {
-            onTxMinedUnconfirmed(it.tx, it.confirmationCount)
+            onTxMinedUnconfirmed(it.tx)
         }
         EventBus.subscribe<Event.Wallet.TxMined>(this) {
             onTxMined(it.tx)
@@ -489,7 +489,7 @@ internal class TxListFragment : Fragment(),
         pendingOutboundTxs.firstOrNull { it.id == tx.id }?.status = TxStatus.BROADCAST
     }
 
-    private fun onTxMinedUnconfirmed(tx: CompletedTx, confirmationCount: Int) {
+    private fun onTxMinedUnconfirmed(tx: CompletedTx) {
         val source = when (tx.direction) {
             Tx.Direction.INBOUND -> pendingInboundTxs
             Tx.Direction.OUTBOUND -> pendingOutboundTxs
