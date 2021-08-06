@@ -61,6 +61,7 @@ import com.tari.android.wallet.service.TariWalletService
 import com.tari.android.wallet.service.WalletService
 import com.tari.android.wallet.ui.extension.*
 import com.tari.android.wallet.data.sharedPrefs.SharedPrefsRepository
+import com.tari.android.wallet.service.baseNode.BaseNodeState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -119,12 +120,7 @@ internal class BaseNodeConfigFragment : Fragment(), ServiceConnection {
     }
 
     private fun subscribeToEventBus() {
-        EventBus.subscribe<Event.Wallet.BaseNodeSyncComplete>(this) {
-            lifecycleScope.launch(Dispatchers.Main) {
-                updateCurrentBaseNode()
-            }
-        }
-        EventBus.subscribe<Event.Wallet.BaseNodeSyncStarted>(this) {
+        EventBus.baseNodeState.subscribe(this) {
             lifecycleScope.launch(Dispatchers.Main) {
                 updateCurrentBaseNode()
             }

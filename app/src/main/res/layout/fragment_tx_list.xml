@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/root_view"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -14,86 +15,6 @@
         android:background="@drawable/home_bg_gradient" />
 
     <!-- top content -->
-    <RelativeLayout
-        android:id="@+id/top_content_container_view"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="@dimen/common_horizontal_margin"
-        android:layout_marginTop="@dimen/home_top_content_container_view_top_margin">
-
-        <!-- referral icon (image only) -->
-        <ImageView
-            android:id="@+id/wallet_info_image_view"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignParentEnd="true"
-            android:layout_centerInParent="true"
-            android:contentDescription="@null"
-            android:scaleType="center"
-            android:src="@drawable/icon_gift"
-            android:visibility="invisible" />
-
-        <!-- title -->
-        <com.tari.android.wallet.ui.component.CustomFontTextView
-            android:id="@+id/available_balance_text_view"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignParentStart="true"
-            android:layout_marginTop="12dp"
-            android:layout_marginEnd="4dp"
-            android:layout_toStartOf="@+id/wallet_info_image_view"
-            android:letterSpacing="-0.018"
-            android:text="@string/home_available_balance"
-            android:textColor="@color/white"
-            android:textSize="12sp"
-            app:customFont="AVENIR_LT_STD_MEDIUM" />
-
-        <LinearLayout
-            android:layout_width="0dp"
-            android:layout_height="@dimen/home_balance_digit_height"
-            android:layout_below="@id/available_balance_text_view"
-            android:layout_alignParentStart="true"
-            android:layout_marginTop="2dp"
-            android:layout_marginEnd="4dp"
-            android:layout_toStartOf="@+id/wallet_info_image_view"
-            android:gravity="center_vertical"
-            android:orientation="horizontal">
-
-            <!-- gem icon -->
-            <ImageView
-                android:id="@+id/balance_gem_image_view"
-                android:layout_width="@dimen/home_balance_gem_width"
-                android:layout_height="@dimen/home_balance_gem_height"
-                android:layout_marginTop="-4dp"
-                android:contentDescription="@null"
-                android:src="@drawable/home_gem_balance" />
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="@dimen/home_balance_digit_height"
-                android:layout_marginStart="6dp"
-                android:orientation="horizontal">
-
-                <LinearLayout
-                    android:id="@+id/balance_digit_container_view"
-                    android:layout_width="wrap_content"
-                    android:layout_height="@dimen/home_balance_digit_height"
-                    android:layout_marginTop="-4dp"
-                    android:orientation="horizontal" />
-
-                <!-- decimals -->
-                <LinearLayout
-                    android:id="@+id/balance_decimals_digit_container_view"
-                    android:layout_width="wrap_content"
-                    android:layout_height="@dimen/home_balance_digit_decimal_height"
-                    android:layout_marginTop="@dimen/home_balance_decimal_container_top_margin"
-                    android:clipChildren="true"
-                    android:gravity="top"
-                    android:orientation="horizontal"
-                    android:padding="0dp" />
-            </LinearLayout>
-        </LinearLayout>
-    </RelativeLayout>
 
     <View
         android:id="@+id/tx_list_overlay_view"
@@ -383,7 +304,8 @@
         android:layout_width="match_parent"
         android:layout_height="@dimen/common_header_height"
         android:layout_marginTop="0dp"
-        android:background="@color/white">
+        android:background="@color/white"
+        tools:visibility="gone">
 
         <ImageButton
             android:id="@+id/close_tx_list_button"
@@ -403,6 +325,86 @@
             android:textSize="16sp"
             app:customFont="AVENIR_LT_STD_HEAVY" />
 
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:id="@+id/top_content_container_view"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/common_horizontal_margin"
+        android:layout_marginTop="@dimen/home_top_content_container_view_top_margin">
+
+        <!-- referral icon (image only) -->
+        <com.tari.android.wallet.ui.component.networkStateIndicator.ConnectionIndicatorView
+            android:id="@+id/network_status_state_indicator_view"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentEnd="true"
+            android:layout_marginBottom="8dp"
+            android:layout_alignTop="@+id/balance_container"
+            android:layout_alignBottom="@+id/balance_container"/>
+
+        <!-- title -->
+        <com.tari.android.wallet.ui.component.CustomFontTextView
+            android:id="@+id/available_balance_text_view"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentStart="true"
+            android:layout_marginTop="12dp"
+            android:layout_marginEnd="4dp"
+            android:layout_toStartOf="@+id/network_status_state_indicator_view"
+            android:letterSpacing="-0.018"
+            android:text="@string/home_available_balance"
+            android:textColor="@color/white"
+            android:textSize="12sp"
+            app:customFont="AVENIR_LT_STD_MEDIUM" />
+
+        <LinearLayout
+            android:id="@+id/balance_container"
+            android:layout_width="0dp"
+            android:layout_height="@dimen/home_balance_digit_height"
+            android:layout_below="@id/available_balance_text_view"
+            android:layout_alignParentStart="true"
+            android:layout_marginTop="2dp"
+            android:layout_marginEnd="4dp"
+            android:layout_toStartOf="@+id/network_status_state_indicator_view"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <!-- gem icon -->
+            <ImageView
+                android:id="@+id/balance_gem_image_view"
+                android:layout_width="@dimen/home_balance_gem_width"
+                android:layout_height="@dimen/home_balance_gem_height"
+                android:layout_marginTop="-4dp"
+                android:contentDescription="@null"
+                android:src="@drawable/home_gem_balance" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/home_balance_digit_height"
+                android:layout_marginStart="6dp"
+                android:orientation="horizontal">
+
+                <LinearLayout
+                    android:id="@+id/balance_digit_container_view"
+                    android:layout_width="wrap_content"
+                    android:layout_height="@dimen/home_balance_digit_height"
+                    android:layout_marginTop="-4dp"
+                    android:orientation="horizontal" />
+
+                <!-- decimals -->
+                <LinearLayout
+                    android:id="@+id/balance_decimals_digit_container_view"
+                    android:layout_width="wrap_content"
+                    android:layout_height="@dimen/home_balance_digit_decimal_height"
+                    android:layout_marginTop="@dimen/home_balance_decimal_container_top_margin"
+                    android:clipChildren="true"
+                    android:gravity="top"
+                    android:orientation="horizontal"
+                    android:padding="0dp" />
+            </LinearLayout>
+        </LinearLayout>
     </RelativeLayout>
 
     <View
