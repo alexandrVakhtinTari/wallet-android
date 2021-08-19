@@ -38,8 +38,8 @@ import android.content.Intent
 import androidx.documentfile.provider.DocumentFile
 import androidx.fragment.app.Fragment
 import com.orhanobut.logger.Logger
-import com.tari.android.wallet.extension.getLastPathComponent
 import com.tari.android.wallet.data.sharedPrefs.SharedPrefsRepository
+import com.tari.android.wallet.extension.getLastPathComponent
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.apache.commons.io.FileUtils
@@ -173,6 +173,9 @@ internal class LocalBackupStorage(
         withContext(Dispatchers.IO) {
             // copy file to temp location
             val tempFile = File(walletTempDirPath, backupFiles.last().name!!)
+            if (tempFile.parentFile?.exists() == false) {
+                tempFile.parentFile?.mkdirs()
+            }
             // create file & fetch if it hasn't been fetched before
             if (!tempFile.exists()) {
                 tempFile.createNewFile()
