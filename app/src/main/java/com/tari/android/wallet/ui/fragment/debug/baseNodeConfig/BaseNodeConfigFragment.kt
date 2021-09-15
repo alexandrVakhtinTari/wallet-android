@@ -30,37 +30,38 @@
  * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.tari.android.wallet.ui.fragment.debug
+package com.tari.android.wallet.ui.fragment.debug.baseNodeConfig
 
-import android.content.*
+import android.content.ClipboardManager
 import android.content.Context.CLIPBOARD_SERVICE
+import android.graphics.drawable.Drawable
 import android.os.Bundle
-import android.os.IBinder
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.core.widget.addTextChangedListener
-import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
-import com.orhanobut.logger.Logger
 import com.tari.android.wallet.R
 import com.tari.android.wallet.R.color.white
 import com.tari.android.wallet.R.drawable.base_node_config_edit_text_bg
 import com.tari.android.wallet.R.drawable.base_node_config_edit_text_invalid_bg
 import com.tari.android.wallet.application.WalletManager
 import com.tari.android.wallet.application.baseNodes.BaseNodes
+import com.tari.android.wallet.data.sharedPrefs.SharedPrefsRepository
 import com.tari.android.wallet.databinding.FragmentBaseNodeConfigBinding
-import com.tari.android.wallet.event.EventBus
+import com.tari.android.wallet.extension.observe
 import com.tari.android.wallet.ffi.FFIPublicKey
 import com.tari.android.wallet.ffi.FFIWallet
 import com.tari.android.wallet.ffi.HexString
 import com.tari.android.wallet.model.BaseNodeValidationResult
 import com.tari.android.wallet.model.WalletError
 import com.tari.android.wallet.service.TariWalletService
-import com.tari.android.wallet.service.WalletService
+import com.tari.android.wallet.ui.common.CommonFragment
 import com.tari.android.wallet.ui.extension.*
-import com.tari.android.wallet.data.sharedPrefs.SharedPrefsRepository
+import com.tari.android.wallet.ui.fragment.debug.baseNodeConfig.validator.BaseNodeAddressValidator
+import com.tari.android.wallet.ui.fragment.debug.baseNodeConfig.validator.Validator
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -74,7 +75,11 @@ import javax.inject.Inject
  *
  * @author The Tari Development Team
  */
-internal class BaseNodeConfigFragment : Fragment(), ServiceConnection {
+
+//todo replaced buttons
+//todo extract baseNodeRepo
+//todo extract onionValidator
+internal class BaseNodeConfigFragment : CommonFragment<FragmentBaseNodeConfigBinding, BaseNodeConfigViewModel>() {
 
     @Inject
     lateinit var sharedPrefsWrapper: SharedPrefsRepository
@@ -85,30 +90,21 @@ internal class BaseNodeConfigFragment : Fragment(), ServiceConnection {
     @Inject
     lateinit var baseNodes: BaseNodes
 
-    private val onion2ClipboardRegex = Regex("[a-zA-Z0-9]{64}::/onion/[a-zA-Z2-7]{16}(:[0-9]+)?")
-    private val onion3ClipboardRegex = Regex("[a-zA-Z0-9]{64}::/onion[2-3]/[a-zA-Z2-7]{56}(:[0-9]+)?")
-    private val publicKeyRegex = Regex("[a-zA-Z0-9]{64}")
-    private val onion2AddressRegex = Regex("/onion/[a-zA-Z2-7]{16}(:[0-9]+)?")
-    private val onion3AddressRegex = Regex("/onion[2-3]/[a-zA-Z2-7]{56}(:[0-9]+)?")
-
-    private lateinit var ui: FragmentBaseNodeConfigBinding
     private lateinit var walletService: TariWalletService
 
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View =
-        FragmentBaseNodeConfigBinding.inflate(inflater, container, false)
-            .also { ui = it }
-            .root
+    ): View = FragmentBaseNodeConfigBinding.inflate(inflater, container, false).also { ui = it }.root
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         appComponent.inject(this)
-        bindToWalletService()
+        val viewModel: BaseNodeConfigViewModel by viewModels()
+        bindViewModel(viewModel)
         setupUI()
-        subscribeToEventBus()
+        observeUI()
     }
 
     override fun onStart() {
@@ -116,67 +112,39 @@ internal class BaseNodeConfigFragment : Fragment(), ServiceConnection {
         checkClipboardForValidBaseNodeData()
     }
 
-    override fun onDestroyView() {
-        EventBus.baseNodeState.unsubscribe(this)
-        requireActivity().unbindService(this)
-        super.onDestroyView()
+    private fun setupUI() = with(ui) {
+        progressBar.setColor(color(white))
+        updateCurrentBaseNode()
+        progressBar.gone()
+        invalidPublicKeyHexTextView.invisible()
+        invalidAddressTextView.invisible()
+        resetButton.setOnClickListener { resetButtonClicked(it) }
+        saveButton.setOnClickListener { saveButtonClicked(it) }
+        publicKeyHexEditText.addTextChangedListener(onTextChanged = { _, _, _, _ -> onPublicKeyHexChanged() })
+        addressEditText.addTextChangedListener(onTextChanged = { _, _, _, _ -> onAddressChanged() })
     }
 
-    private fun subscribeToEventBus() {
-        EventBus.baseNodeState.subscribe(this) {
-            lifecycleScope.launch(Dispatchers.Main) {
-                updateCurrentBaseNode()
-            }
+    private fun observeUI() = with(viewModel) {
+
+        observe(publicKeyHexValidation) {
+            ui.publicKeyHexEditText.background = getValidBg(it == Validator.State.Invalid)
+            ui.invalidPublicKeyHexTextView.setVisible(it == Validator.State.Invalid, View.INVISIBLE)
+        }
+
+        observe(publicKeyHexValidation) {
+            ui.addressEditText.background = getValidBg(it == Validator.State.Invalid)
+            ui.invalidAddressTextView.setVisible(it == Validator.State.Invalid, View.INVISIBLE)
         }
     }
 
-    private fun bindToWalletService() {
-        val bindIntent = Intent(requireActivity(), WalletService::class.java)
-        requireActivity().bindService(bindIntent, this, Context.BIND_AUTO_CREATE)
-    }
-
-    override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
-        Logger.i("AddAmountFragment onServiceConnected")
-        walletService = TariWalletService.Stub.asInterface(service)
-        // Only binding UI if we have not passed `onDestroyView` line, which is a possibility
-        setupUI()
-    }
-
-    override fun onServiceDisconnected(name: ComponentName?) {
-        Logger.i("AddAmountFragment onServiceDisconnected")
-        // No-op for now
-    }
-
-    private fun setupUI() {
-        ui.progressBar.setColor(color(white))
-        ui.apply {
-            updateCurrentBaseNode()
-            progressBar.gone()
-            invalidPublicKeyHexTextView.invisible()
-            invalidAddressTextView.invisible()
-            resetButton.setOnClickListener { resetButtonClicked(it) }
-            saveButton.setOnClickListener { saveButtonClicked(it) }
-            publicKeyHexEditText.addTextChangedListener(
-                onTextChanged = { _, _, _, _ -> onPublicKeyHexChanged() }
-            )
-            addressEditText.addTextChangedListener(
-                onTextChanged = { _, _, _, _ -> onAddressChanged() }
-            )
-        }
-    }
+    private fun getValidBg(isInvalid : Boolean) = drawable(if (isInvalid) base_node_config_edit_text_invalid_bg else base_node_config_edit_text_bg)
 
     private fun updateCurrentBaseNode() {
         val syncSuccessful = sharedPrefsWrapper.baseNodeLastSyncResult
         ui.syncStatusTextView.text = when (syncSuccessful) {
-            null -> {
-                string(R.string.debug_base_node_syncing)
-            }
-            BaseNodeValidationResult.SUCCESS -> {
-                string(R.string.debug_base_node_sync_successful)
-            }
-            else -> {
-                string(R.string.debug_base_node_sync_failed)
-            }
+            null -> string(R.string.debug_base_node_syncing)
+            BaseNodeValidationResult.SUCCESS -> string(R.string.debug_base_node_sync_successful)
+            else -> string(R.string.debug_base_node_sync_failed)
         }
         if (sharedPrefsWrapper.baseNodeIsUserCustom) {
             ui.nameTextView.text = string(R.string.debug_base_node_custom)
@@ -203,45 +171,14 @@ internal class BaseNodeConfigFragment : Fragment(), ServiceConnection {
      * Checks whether a the public key and address are in the clipboard in the expected format.
      */
     private fun checkClipboardForValidBaseNodeData() {
-        val clipboardManager =
-            (activity?.getSystemService(CLIPBOARD_SERVICE) as? ClipboardManager) ?: return
-        val clipboardString =
-            clipboardManager.primaryClip?.getItemAt(0)?.text?.toString() ?: return
+        val clipboardManager = (activity?.getSystemService(CLIPBOARD_SERVICE) as? ClipboardManager) ?: return
+        val clipboardString = clipboardManager.primaryClip?.getItemAt(0)?.text?.toString() ?: return
         // if clipboard contains at least 1 emoji, then display paste emoji banner
-        if (onion3ClipboardRegex.matches(clipboardString)) {
-            val input = clipboardString.split("::")
-            ui.publicKeyHexEditText.setText(input[0])
-            ui.addressEditText.setText(input[1])
-        } else if (onion2ClipboardRegex.matches(clipboardString)) {
+        if (BaseNodeAddressValidator().validate(clipboardString) == Validator.State.Valid) {
             val input = clipboardString.split("::")
             ui.publicKeyHexEditText.setText(input[0])
             ui.addressEditText.setText(input[1])
         }
-    }
-
-    private fun validate(): Boolean {
-        var isValid = true
-        // validate public key
-        val publicKeyHex = ui.publicKeyHexEditText.editableText.toString()
-        if (!publicKeyRegex.matches(publicKeyHex)) {
-            isValid = false
-            ui.publicKeyHexEditText.background = drawable(base_node_config_edit_text_invalid_bg)
-            ui.invalidPublicKeyHexTextView.visible()
-        } else {
-            ui.publicKeyHexEditText.background = drawable(base_node_config_edit_text_bg)
-            ui.invalidPublicKeyHexTextView.invisible()
-        }
-        // validate address
-        val address = ui.addressEditText.editableText.toString()
-        if (!onion3AddressRegex.matches(address) && !onion2AddressRegex.matches(address)) {
-            isValid = false
-            ui.addressEditText.background = drawable(base_node_config_edit_text_invalid_bg)
-            ui.invalidAddressTextView.visible()
-        } else {
-            ui.addressEditText.background = drawable(base_node_config_edit_text_bg)
-            ui.invalidAddressTextView.invisible()
-        }
-        return isValid
     }
 
     private fun resetButtonClicked(view: View) {
@@ -333,5 +270,4 @@ internal class BaseNodeConfigFragment : Fragment(), ServiceConnection {
         ).show()
         updateCurrentBaseNode()
     }
-
 }

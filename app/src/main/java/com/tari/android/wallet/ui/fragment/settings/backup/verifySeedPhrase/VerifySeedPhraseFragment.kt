@@ -50,6 +50,7 @@ import com.tari.android.wallet.ui.extension.*
 
 class VerifySeedPhraseFragment : CommonFragment<FragmentVerifySeedPhraseBinding, VerifySeedPhraseViewModel>() {
 
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,

@@ -91,26 +91,26 @@ Java_com_tari_android_wallet_ffi_FFICompletedTx_jniGetSourcePublicKey(
     setErrorCode(jEnv, error, i);
     return result;
 }
-
-extern "C"
-JNIEXPORT jlong JNICALL
-Java_com_tari_android_wallet_ffi_FFICompletedTx_jniGetTransactionKernel(
-        JNIEnv *jEnv,
-        jobject jThis,
-        jobject error) {
-    int i = 0;
-    int *r = &i;
-    jlong lCompletedTx = GetPointerField(jEnv, jThis);
-    auto *pCompletedTx = reinterpret_cast<TariCompletedTransaction *>(lCompletedTx);
-    auto result = reinterpret_cast<jlong>(
-            completed_transaction_get_transaction_kernel(
-                    pCompletedTx,
-                    r
-            )
-    );
-    setErrorCode(jEnv, error, i);
-    return result;
-}
+//
+//extern "C"
+//JNIEXPORT jlong JNICALL
+//Java_com_tari_android_wallet_ffi_FFICompletedTx_jniGetTransactionKernel(
+//        JNIEnv *jEnv,
+//        jobject jThis,
+//        jobject error) {
+//    int i = 0;
+//    int *r = &i;
+//    jlong lCompletedTx = GetPointerField(jEnv, jThis);
+//    auto *pCompletedTx = reinterpret_cast<TariCompletedTransaction *>(lCompletedTx);
+//    auto result = reinterpret_cast<jlong>(
+//            completed_transaction_get_transaction_kernel(
+//                    pCompletedTx,
+//                    r
+//            )
+//    );
+//    setErrorCode(jEnv, error, i);
+//    return result;
+//}
 
 extern "C"
 JNIEXPORT jbyteArray JNICALL
