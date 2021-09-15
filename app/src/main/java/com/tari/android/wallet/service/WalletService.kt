@@ -49,6 +49,7 @@ import com.tari.android.wallet.application.WalletManager
 import com.tari.android.wallet.application.WalletState
 import com.tari.android.wallet.application.baseNodes.BaseNodes
 import com.tari.android.wallet.data.sharedPrefs.SharedPrefsRepository
+import com.tari.android.wallet.data.sharedPrefs.baseNode.BaseNodeSharedRepository
 import com.tari.android.wallet.di.WalletModule
 import com.tari.android.wallet.event.Event
 import com.tari.android.wallet.event.EventBus
@@ -120,6 +121,9 @@ internal class WalletService : Service(), FFIWalletListener, LifecycleObserver {
 
     @Inject
     lateinit var sharedPrefsWrapper: SharedPrefsRepository
+
+    @Inject
+    lateinit var baseNodeSharedPrefsRepository: BaseNodeSharedRepository
 
     @Inject
     lateinit var walletManager: WalletManager
@@ -488,8 +492,9 @@ internal class WalletService : Service(), FFIWalletListener, LifecycleObserver {
         }.isNotEmpty()
         if (baseNodeNotInSync) {
             baseNodeValidationStatusMap.clear()
-            sharedPrefsWrapper.baseNodeLastSyncResult = BaseNodeValidationResult.BASE_NODE_NOT_IN_SYNC
-            if (!sharedPrefsWrapper.baseNodeIsUserCustom) {
+            baseNodeSharedPrefsRepository.baseNodeLastSyncResult = BaseNodeValidationResult.BASE_NODE_NOT_IN_SYNC
+            val currentBaseNode = baseNodeSharedPrefsRepository.currentBaseNode
+            if (currentBaseNode == null || !currentBaseNode.isCustom) {
                 baseNodes.setNextBaseNode()
             }
             EventBus.baseNodeState.post(BaseNodeState.SyncCompleted(BaseNodeValidationResult.BASE_NODE_NOT_IN_SYNC))
@@ -502,7 +507,7 @@ internal class WalletService : Service(), FFIWalletListener, LifecycleObserver {
         }.isNotEmpty()
         if (aborted) {
             baseNodeValidationStatusMap.clear()
-            sharedPrefsWrapper.baseNodeLastSyncResult = BaseNodeValidationResult.ABORTED
+            baseNodeSharedPrefsRepository.baseNodeLastSyncResult = BaseNodeValidationResult.ABORTED
             EventBus.baseNodeState.post(BaseNodeState.SyncCompleted(BaseNodeValidationResult.ABORTED))
             return
         }
@@ -512,8 +517,9 @@ internal class WalletService : Service(), FFIWalletListener, LifecycleObserver {
         }.isNotEmpty()
         if (failed) {
             baseNodeValidationStatusMap.clear()
-            sharedPrefsWrapper.baseNodeLastSyncResult = BaseNodeValidationResult.FAILURE
-            if (!sharedPrefsWrapper.baseNodeIsUserCustom) {
+            baseNodeSharedPrefsRepository.baseNodeLastSyncResult = BaseNodeValidationResult.FAILURE
+            val currentBaseNode = baseNodeSharedPrefsRepository.currentBaseNode
+            if (currentBaseNode == null || !currentBaseNode.isCustom) {
                 baseNodes.setNextBaseNode()
             }
             EventBus.baseNodeState.post(BaseNodeState.SyncCompleted(BaseNodeValidationResult.FAILURE))
@@ -531,7 +537,7 @@ internal class WalletService : Service(), FFIWalletListener, LifecycleObserver {
         }.isEmpty()
         if (successful) {
             baseNodeValidationStatusMap.clear()
-            sharedPrefsWrapper.baseNodeLastSyncResult = BaseNodeValidationResult.SUCCESS
+            baseNodeSharedPrefsRepository.baseNodeLastSyncResult = BaseNodeValidationResult.SUCCESS
             EventBus.baseNodeState.post(BaseNodeState.SyncCompleted(BaseNodeValidationResult.SUCCESS))
             listeners.iterator().forEach { it.onBaseNodeSyncComplete(true) }
         }
@@ -1009,12 +1015,12 @@ internal class WalletService : Service(), FFIWalletListener, LifecycleObserver {
                     wallet.startTxValidation(),
                     null
                 )
-                sharedPrefsWrapper.baseNodeLastSyncResult = null
+                baseNodeSharedPrefsRepository.baseNodeLastSyncResult = null
                 EventBus.baseNodeState.post(BaseNodeState.SyncStarted)
                 true
             } catch (throwable: Throwable) {
                 Logger.e("Base node validation error: $throwable")
-                sharedPrefsWrapper.baseNodeLastSyncResult = BaseNodeValidationResult.FAILURE
+                baseNodeSharedPrefsRepository.baseNodeLastSyncResult = BaseNodeValidationResult.FAILURE
                 baseNodeValidationStatusMap.clear()
                 mapThrowableIntoError(throwable, error)
                 false

@@ -38,11 +38,11 @@ import android.net.Uri
 import com.google.gson.GsonBuilder
 import com.google.gson.reflect.TypeToken
 import com.tari.android.wallet.application.Network
+import com.tari.android.wallet.data.sharedPrefs.baseNode.BaseNodeSharedRepository
 import com.tari.android.wallet.data.sharedPrefs.delegates.SharedPrefBigIntegerDelegate
 import com.tari.android.wallet.data.sharedPrefs.delegates.SharedPrefBooleanDelegate
 import com.tari.android.wallet.data.sharedPrefs.delegates.SharedPrefDateTimeDelegate
 import com.tari.android.wallet.data.sharedPrefs.delegates.SharedPrefStringDelegate
-import com.tari.android.wallet.model.BaseNodeValidationResult
 import com.tari.android.wallet.service.faucet.TestnetTariUTXOKey
 import de.adorsys.android.securestoragelibrary.SecurePreferences
 import org.joda.time.DateTime
@@ -58,7 +58,8 @@ import kotlin.random.Random
 //todo Need to thing about reactive realization
 class SharedPrefsRepository(
     private val context: Context,
-    private val sharedPrefs: SharedPreferences
+    private val sharedPrefs: SharedPreferences,
+    private val baseNodeSharedRepository: BaseNodeSharedRepository
 ) {
 
     private object Key {
@@ -71,11 +72,6 @@ class SharedPrefsRepository(
         const val onboardingCompleted = "tari_wallet_onboarding_completed"
         const val onboardingDisplayedAtHome = "tari_wallet_onboarding_displayed_at_home"
         const val torBinPath = "tari_wallet_tor_bin_path"
-        const val baseNodeLastSyncResult = "tari_wallet_base_node_last_sync_result"
-        const val baseNodeIsUserCustom = "tari_wallet_base_node_is_user_custom"
-        const val baseNodeNameKey = "tari_wallet_base_node_name"
-        const val baseNodePublicKeyHexKey = "tari_wallet_base_node_public_key_hex"
-        const val baseNodeAddressKey = "tari_wallet_base_node_address"
         const val faucetTestnetTariRequestCompleted = "tari_wallet_faucet_testnet_tari_request_completed"
         const val testnetTariUTXOListKey = "tari_wallet_testnet_tari_utxo_key_list"
         const val firstTestnetUTXOTxId = "tari_wallet_first_testnet_utxo_tx_id"
@@ -116,26 +112,6 @@ class SharedPrefsRepository(
     var onboardingDisplayedAtHome: Boolean by SharedPrefBooleanDelegate(sharedPrefs, Key.onboardingDisplayedAtHome)
 
     var torBinPath: String? by SharedPrefStringDelegate(sharedPrefs, Key.torBinPath)
-
-    //todo Extract to baseNodesRepository
-    var baseNodeLastSyncResult: BaseNodeValidationResult?
-        get() = try {
-            BaseNodeValidationResult.map(sharedPrefs.getInt(Key.baseNodeLastSyncResult, -1))
-        } catch (exception: Exception) {
-            null
-        }
-        set(value) = sharedPrefs.edit().run {
-            putInt(Key.baseNodeLastSyncResult, value?.status ?: -1)
-            apply()
-        }
-
-    var baseNodeIsUserCustom: Boolean by SharedPrefBooleanDelegate(sharedPrefs, Key.baseNodeIsUserCustom)
-
-    var baseNodeName: String? by SharedPrefStringDelegate(sharedPrefs, Key.baseNodeNameKey)
-
-    var baseNodePublicKeyHex: String? by SharedPrefStringDelegate(sharedPrefs, Key.baseNodePublicKeyHexKey)
-
-    var baseNodeAddress: String? by SharedPrefStringDelegate(sharedPrefs, Key.baseNodeAddressKey)
 
     var faucetTestnetTariRequestCompleted: Boolean by SharedPrefBooleanDelegate(sharedPrefs, Key.faucetTestnetTariRequestCompleted)
 
@@ -212,6 +188,7 @@ class SharedPrefsRepository(
     }
 
     fun clear() {
+        baseNodeSharedRepository.clear()
         publicKeyHexString = null
         isAuthenticated = false
         emojiId = null
@@ -221,11 +198,6 @@ class SharedPrefsRepository(
         onboardingAuthSetupCompleted = false
         onboardingDisplayedAtHome = false
         torBinPath = null
-        baseNodeLastSyncResult = null
-        baseNodeIsUserCustom = false
-        baseNodeName = null
-        baseNodePublicKeyHex = null
-        baseNodeAddress = null
         faucetTestnetTariRequestCompleted = false
         testnetTariUTXOKeyList = mutableListOf()
         firstTestnetUTXOTxId = null
