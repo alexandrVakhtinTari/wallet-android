@@ -4,6 +4,7 @@ import android.content.ClipboardManager
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
+import com.orhanobut.logger.Logger
 import com.tari.android.wallet.R
 import com.tari.android.wallet.application.DeepLink
 import com.tari.android.wallet.data.network.NetworkRepository
@@ -116,9 +117,12 @@ class AddRecipientViewModel() : CommonViewModel() {
 
         viewModelScope.launch(Dispatchers.IO) {
             val searchResult = yatAdapter.searchYats(query)
+            Logger.i(searchResult.status.toString())
+            Logger.i(searchResult.error.toString())
+            Logger.i(searchResult.result.toString())
             if (searchResult.status) {
                 val list = _list.value!!
-                val records = searchResult.result.filter { it.type == YatRecordType.TARI_PUBKEY }
+                val records = searchResult.result.orEmpty().filter { it.type == YatRecordType.TARI_PUBKEY }
                     .map { result -> YatUser(walletService.getPublicKeyFromHexString(result.data)).apply { yat = query } }
                     .map { user -> RecipientViewHolderItem(user) }
                 list.addAll(0, records)
