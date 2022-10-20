@@ -1,7 +1,7 @@
 import org.gradle.api.tasks.testing.logging.TestLogEvent
 
 buildscript {
-    ext.kotlin_version = "1.6.21"
+    ext.kotlin_version = "1.7.20"
 
     // build & version
     ext.buildNumber = 216
@@ -19,9 +19,9 @@ buildscript {
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:7.2.2'
+        classpath 'com.android.tools.build:gradle:7.3.1'
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
-        classpath "io.sentry:sentry-android-gradle-plugin:2.1.5"
+        classpath "io.sentry:sentry-android-gradle-plugin:3.2.0"
     }
 }
 
