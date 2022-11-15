@@ -79,7 +79,7 @@ framework for UI tree rebuild on configuration changes"""
         setChangePasswordCTAState(isEnabled = false)
         ui.passwordEditText.requestFocus()
         ui.root.postDelayed(LOCAL_AUTH_DELAY_TIME) { requireActivity().showKeyboard() }
-        ui.backCtaView.setOnClickListener(ThrottleClick { requireActivity().onBackPressed() })
+        ui.backCtaView.setOnClickListener(ThrottleClick { requireActivity().onBackPressedDispatcher.onBackPressed() })
         ui.changePasswordCtaTextView.setOnClickListener {
             val input = (ui.passwordEditText.text?.toString() ?: "").toCharArray()
             val backupPassword = backupSettingsRepository.backupPassword?.toCharArray() ?: charArrayOf()

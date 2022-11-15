@@ -100,12 +100,12 @@ class TxDetailsFragment : CommonFragment<FragmentTxDetailsBinding, TxDetailsView
         val viewModel: TxDetailsViewModel by viewModels()
         bindViewModel(viewModel)
 
-        val tx = arguments?.getParcelable<Tx>(TX_EXTRA_KEY)
+        val tx = arguments?.getParcelable(TX_EXTRA_KEY, Tx::class.java)
         if (tx != null) {
             viewModel.setTxArg(tx)
         }
 
-        val txId = arguments?.getParcelable<TxId>(TX_ID_EXTRA_KEY)
+        val txId = arguments?.getParcelable(TX_ID_EXTRA_KEY, TxId::class.java)
         if (txId != null) {
             viewModel.loadTxById(txId)
         }

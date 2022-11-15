@@ -187,13 +187,6 @@ class FinalizeSendTxFragment : CommonFragment<FragmentFinalizeSendTxBinding, Fin
         ui.lottieAnimationView.playAnimation()
         ui.lottieAnimationView.progress = lottieAnimationPauseProgress
 
-        // track event
-        val trackerEvent = when (txFailureReason) {
-            TxFailureReason.NETWORK_CONNECTION_ERROR -> "Transaction Failed - Tor Issue"
-            TxFailureReason.BASE_NODE_CONNECTION_ERROR -> "Transaction Failed - Node Issue"
-            TxFailureReason.SEND_ERROR -> "Transaction Failed - Node Issue"
-        }
-
         // fade out text and progress
         ValueAnimator.ofFloat(1f, 0f).apply {
             addUpdateListener { valueAnimator: ValueAnimator ->

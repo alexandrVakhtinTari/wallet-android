@@ -87,7 +87,6 @@ class MicroTari() : Parcelable, Comparable<MicroTari>, Serializable {
     operator fun minus(decrement: Long): MicroTari = this - decrement.toMicroTari()
 
 
-
     constructor(parcel: Parcel) : this() {
         readFromParcel(parcel)
     }
